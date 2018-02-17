@@ -9,22 +9,84 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+Load raw data: Beers.csv and Breweries.csv
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r echo=TRUE}
+beers <- read.csv("Beers.csv", header = TRUE)
+breweries <- read.csv("Breweries.csv", header = TRUE)
 ```
 
-## Including Plots
+How many breweries are present in each state?
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r echo=TRUE}
+library(plyr)
+count(breweries, 'State')
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Merge beer data with breweries data.
+
+```{r echo=TRUE}
+head(beers)
+head(breweries)
+colnames(breweries)[1] <- "Brewery_id"
+
+breweriesbeers <- merge(breweries, beers, by = "Brewery_id")
+colnames(breweriesbeers)
+
+colnames(breweriesbeers)[2] <- "BreweryName"
+colnames(breweriesbeers)[5] <- "BeerName"
+
+breweriesbeers <- breweriesbeers[,c(1, 6, 2, 3, 4, 5, 7, 8, 9)]
+colnames(breweriesbeers)
+
+head(breweriesbeers)
+tail(breweriesbeers)
+```
+
+Report the number of NAs in each column.
+
+```{r echo=TRUE}
+sapply(breweriesbeers, function(x) sum(is.na(x)))
+```
+
+Compute the median alcohol content and IBU for each state. Plot a bar chart to compare.
+
+```{r echo=TRUE}
+ABVbyState <- data.frame(row.names = 1:51, tapply(breweriesbeers$ABV, breweriesbeers$State, function(x) median = median(x, na.rm = TRUE)))
+IBUbyState <- data.frame(tapply(breweriesbeers$IBU, breweriesbeers$State, function(x) median = median(x, na.rm = TRUE)))
+
+ABVbyState
+IBUbyState
+
+barplot(ABVbyState[2], xlab=ABVbyState[1])
+
+```
+IBU
+Which state has the maximum alcoholic (ABV) beer? Which state has the most bitter (IBU) beer?
+
+```{r}
+max(breweriesbeers$ABV, na.rm = TRUE)
+breweriesbeers[which(breweriesbeers$ABV == 0.128), c("State", "ABV")]
+
+max(breweriesbeers$IBU, na.rm = TRUE)
+breweriesbeers[which(breweriesbeers$IBU == 138), c("State", "IBU")]
+
+```
+
+Summary statistics for the ABV variable.
+
+```{r}
+mean(breweriesbeers$ABV, na.rm = TRUE)
+median(breweriesbeers$ABV, na.rm = TRUE)
+sd(breweriesbeers$ABV, na.rm = TRUE)
+```
+
+Is there an apparent relationship between the bitterness of the beer and its alcoholic content? Draw a scatter plot.
+
+```{r}
+
+library(ggplot2)
+
+ggplot(data = breweriesbeers) +
+  geom_point(mapping = aes(x = IBU, y = ABV))
+```
