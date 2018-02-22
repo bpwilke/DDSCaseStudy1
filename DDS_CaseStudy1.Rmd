@@ -52,16 +52,30 @@ sapply(breweriesbeers, function(x) sum(is.na(x)))
 Compute the median alcohol content and IBU for each state. Plot a bar chart to compare.
 
 ```{r echo=TRUE}
-ABVbyState <- data.frame(row.names = 1:51, tapply(breweriesbeers$ABV, breweriesbeers$State, function(x) median = median(x, na.rm = TRUE)))
-IBUbyState <- data.frame(tapply(breweriesbeers$IBU, breweriesbeers$State, function(x) median = median(x, na.rm = TRUE)))
+library(ggplot2)
 
-ABVbyState
-IBUbyState
+ABVbyState <- tapply(breweriesbeers$ABV, breweriesbeers$State, function(x) median = median(x, na.rm = TRUE))
+IBUbyState <- tapply(breweriesbeers$IBU, breweriesbeers$State, function(x) median = median(x, na.rm = TRUE))
 
-barplot(ABVbyState[2], xlab=ABVbyState[1])
+plotdata <- data.frame(ABVbyState, IBUbyState)
+
+plotdata$State <- rownames(plotdata)
+rownames(plotdata) <- NULL
+
+ggplot(plotdata, aes(x=State, y=ABVbyState)) +
+  geom_bar(stat='identity', color='black', fill='light blue') +
+  xlab("ABVbyState") + ylab("State") +
+  ggtitle("MedianABV by State") +
+  coord_flip()
+
+ggplot(plotdata, aes(x=State, y=IBUbyState)) +
+  geom_bar(stat='identity', color='black', fill='light blue') +
+  xlab("IBUbyState") + ylab("State") +
+  ggtitle("MedianABV by State") +
+  coord_flip()
 
 ```
-IBU
+
 Which state has the maximum alcoholic (ABV) beer? Which state has the most bitter (IBU) beer?
 
 ```{r}
@@ -84,9 +98,6 @@ sd(breweriesbeers$ABV, na.rm = TRUE)
 Is there an apparent relationship between the bitterness of the beer and its alcoholic content? Draw a scatter plot.
 
 ```{r}
-
-library(ggplot2)
-
 ggplot(data = breweriesbeers) +
   geom_point(mapping = aes(x = IBU, y = ABV))
 ```
